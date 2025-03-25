@@ -1,38 +1,33 @@
-import { useEffect, useState } from "react";
-import type { Schema } from "../amplify/data/resource";
-import { generateClient } from "aws-amplify/data";
-
-const client = generateClient<Schema>();
+import React, { useEffect, useState } from "react";
+import TraitsInput from "./components/TraitsInput";
+import SpectralVisualizer from "./components/SpectralVisualizer";
 
 function App() {
-  const [todos, setTodos] = useState<Array<Schema["Todo"]["type"]>>([]);
+  const [spectralData, setSpectralData] = useState<any>(null);
 
   useEffect(() => {
-    client.models.Todo.observeQuery().subscribe({
-      next: (data) => setTodos([...data.items]),
-    });
+    fetch("/data.json")
+      .then((res) => res.json())
+      .then((json) => setSpectralData(json))
+      .catch((err) => console.error("Failed to load data.json", err));
   }, []);
 
-  function createTodo() {
-    client.models.Todo.create({ content: window.prompt("Todo content") });
-  }
+  const handleTraitChange = async (traitValues: Record<string, number>) => {
+    console.log("Simulating Lambda call with:", traitValues);
+
+    // Simulate API delay
+    const simulatedResponse = await new Promise((resolve) =>
+      setTimeout(() => resolve(spectralData), 500)
+    );
+
+    setSpectralData(simulatedResponse);
+  };
 
   return (
-    <main>
-      <h1>My todos</h1>
-      <button onClick={createTodo}>+ new</button>
-      <ul>
-        {todos.map((todo) => (
-          <li key={todo.id}>{todo.content}</li>
-        ))}
-      </ul>
-      <div>
-        🥳 App successfully hosted. Try creating a new todo.
-        <br />
-        <a href="https://docs.amplify.aws/react/start/quickstart/#make-frontend-updates">
-          Review next step of this tutorial.
-        </a>
-      </div>
+    <main style={{ padding: "1rem", maxWidth: "800px", margin: "0 auto" }}>
+      <h1>Spectral Simulator</h1>
+      <TraitsInput onChange={handleTraitChange} />
+      {spectralData && <SpectralVisualizer data={spectralData} />}
     </main>
   );
 }
